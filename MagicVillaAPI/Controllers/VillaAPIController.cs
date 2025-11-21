@@ -1,9 +1,7 @@
 ﻿using MagicVillaAPI.Data;
 using MagicVillaAPI.Models;
 using MagicVillaAPI.Models.Dtos;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Reflection.Metadata.Ecma335;
 
 namespace MagicVillaAPI.Controllers
 {
@@ -12,19 +10,22 @@ namespace MagicVillaAPI.Controllers
     [ApiController]
     public class VillaAPIController : ControllerBase
     {
-        //control dot on windows, creates and assigns property
         public ILogger<VillaAPIController> _logger { get; }
+        public ApplicationDbContext _db { get; }
 
-        public VillaAPIController(ILogger<VillaAPIController> logger)
+        //control dot on windows, creates and assigns property
+        public VillaAPIController(ILogger<VillaAPIController> logger, ApplicationDbContext db)
         {
             _logger = logger;
+            _db = db;
         }
+
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult<IEnumerable<VillaDto>> GetVillas() 
         {
             _logger.LogInformation("Getting all villas");
-            return Ok(VillaStore.villas);
+            return Ok(_db.Villas.ToList());
         }
 
         [HttpGet("{id:int}", Name ="GetVilla")]
@@ -38,7 +39,7 @@ namespace MagicVillaAPI.Controllers
                 _logger.LogError($"Get villa error with ID {id}");
                 return BadRequest();
             }
-            var villa = VillaStore.villas.FirstOrDefault(u => u.Id.Equals(id));
+            var villa = _db.Villas.FirstOrDefault(u => u.Id.Equals(id));
 
             if (villa == null)
             {
@@ -55,7 +56,7 @@ namespace MagicVillaAPI.Controllers
         public ActionResult<VillaDto> CreateVilla([FromBody] VillaDto villa)
         {
             //custom validations 
-            if (VillaStore.villas.FirstOrDefault(v => v.Name.ToLower().Equals(villa.Name.ToLower())) != null)
+            if (_db.Villas.FirstOrDefault(v => v.Name.ToLower().Equals(villa.Name.ToLower())) != null)
             {
                 ModelState.AddModelError("CustomError", "Villa already exists");
                 return BadRequest(ModelState);
@@ -71,9 +72,20 @@ namespace MagicVillaAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
 
-            villa.Id = VillaStore.villas.OrderByDescending(u => u.Id).FirstOrDefault().Id + 1;
+            //create a model to map the dto to the model
+            Villa model = new Villa 
+            {
+                Amenity = villa.Amenity,
+                Details = villa.Details,
+                ImageUrl = villa.ImageUrl,
+                Name = villa.Name,
+                Occupancy = villa.Occupancy,
+                Rate = villa.Rate,
+                Sqft = villa.Sqft
+            };
 
-            VillaStore.villas.Add(villa);
+            _db.Villas.Add(model);
+            _db.SaveChanges();
 
             return CreatedAtRoute("GetVilla", new { id = villa.Id },villa);
         }
@@ -88,14 +100,15 @@ namespace MagicVillaAPI.Controllers
             {
                 return BadRequest();
             }
-            var villa = VillaStore.villas.FirstOrDefault(u => u.Id.Equals(id));
+            var villa = _db.Villas.FirstOrDefault(u => u.Id.Equals(id));
 
             if (villa == null)
             {
                 return NotFound();
             }
 
-            VillaStore.villas.Remove(villa);
+            _db.Villas.Remove(villa);
+            _db.SaveChanges();
 
             return NoContent();
         }
@@ -108,11 +121,20 @@ namespace MagicVillaAPI.Controllers
                 return BadRequest();
             }
 
-            var foundVilla = VillaStore.villas.FirstOrDefault(u => u.Id.Equals(id));
+            //create a model to map the dto to the model
+            Villa model = new()
+            {
+                Amenity = villa.Amenity,
+                Details = villa.Details,
+                ImageUrl = villa.ImageUrl,
+                Name = villa.Name,
+                Occupancy = villa.Occupancy,
+                Rate = villa.Rate,
+                Sqft = villa.Sqft
+            };
 
-            foundVilla.Name = villa.Name;
-            foundVilla.Occupancy = villa.Occupancy;
-            foundVilla.Sqft = villa.Sqft;
+            _db.Villas.Update(model);
+            _db.SaveChanges();
 
             return NoContent();
         }
