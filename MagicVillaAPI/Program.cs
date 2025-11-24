@@ -1,3 +1,4 @@
+using MagicVillaAPI;
 using MagicVillaAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -9,6 +10,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(option =>
 {
     option.UseSqlServer(builder.Configuration.GetConnectionString("DefaultSqlConnection"));
 });
+
+//define automapper service to the builder 
+builder.Services.AddAutoMapper(typeof(MappingConfig));
 
 // Add services to the container.
 Log.Logger = new LoggerConfiguration().MinimumLevel.Debug().WriteTo.File("log/villaLogs.txt", rollingInterval: RollingInterval.Day).CreateLogger();
