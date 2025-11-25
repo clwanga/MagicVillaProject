@@ -1,5 +1,7 @@
 using MagicVillaAPI;
 using MagicVillaAPI.Data;
+using MagicVillaAPI.Repository;
+using MagicVillaAPI.Repository.IRepository;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
@@ -18,6 +20,12 @@ builder.Services.AddAutoMapper(typeof(MappingConfig));
 Log.Logger = new LoggerConfiguration().MinimumLevel.Debug().WriteTo.File("log/villaLogs.txt", rollingInterval: RollingInterval.Day).CreateLogger();
 
 builder.Host.UseSerilog();
+
+//one instance per scope, same instance is reused within the same scope, disposed at the end of scope
+//perfect for request-specific data and database operations
+//-->default to scoped for most business services unless you have a specific reason for singleton. 
+//-->singleton ideal for shared resources, caching and configuration
+builder.Services.AddScoped<IVillaRepository, VillaRepository>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
