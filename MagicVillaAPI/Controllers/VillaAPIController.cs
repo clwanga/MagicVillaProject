@@ -3,6 +3,7 @@ using MagicVillaAPI.Data;
 using MagicVillaAPI.Models;
 using MagicVillaAPI.Models.Dtos;
 using MagicVillaAPI.Repository;
+using MagicVillaAPI.Repository.IRepository;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,12 +14,12 @@ namespace MagicVillaAPI.Controllers
     [ApiController]
     public class VillaAPIController : ControllerBase
     {
-        public VillaRepository _dbVilla { get; }
+        public IVillaRepository _dbVilla { get; }
         public ILogger<VillaAPIController> _logger { get; }
         public IMapper _mapper { get; }
 
         //control dot on windows, creates and assigns property
-        public VillaAPIController(VillaRepository dbVilla, ILogger<VillaAPIController> logger, IMapper mapper)
+        public VillaAPIController(IVillaRepository dbVilla, ILogger<VillaAPIController> logger, IMapper mapper)
         {
             _dbVilla = dbVilla;
             _logger = logger;
